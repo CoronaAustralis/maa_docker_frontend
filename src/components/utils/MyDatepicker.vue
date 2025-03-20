@@ -1,8 +1,8 @@
 <!-- *** -->
 <template>
-    <span ref="container" :id="d_id" :class="cx('root')" :style="sx('root')" v-bind="ptmi('root')">
-        <InputText :pt="ptm('pcInputText')" :ref="inputRef" :class="[inputClass, cx('pcInputText')]"
-            :value="inputFieldValue" @click="onInputClick" @input="onInput" @blur="onBlur"></InputText>
+    <span ref="container" :id="d_id" :class="cx('root')+ ' w-full'" :style="sx('root')" v-bind="ptmi('root')">
+        <InputText :pt="ptm('pcInputText')" :ref="inputRef" :class="[inputClass, cx('pcInputText')]+ ' w-full bg-transparent py-1 text-sm'" :value="inputValue"
+            @click.stop="onInputClick" @input="onInput" @blur="onBlur"></InputText>
         <Portal :appendTo="appendTo" :disabled="inline">
             <transition name="p-connected-overlay" @enter="onOverlayEnter($event)" @after-enter="onOverlayEnterComplete"
                 @after-leave="onOverlayAfterLeave" @leave="onOverlayLeave">
@@ -351,6 +351,7 @@ export default {
     timePickerTimer: null,
     preventFocus: false,
     typeUpdate: false,
+    emits: ["getNewTime"],
     data() {
         return {
             d_id: this.id,
@@ -359,7 +360,6 @@ export default {
             currentHour: null,
             currentMinute: null,
             currentSecond: null,
-            inputFieldValue: "",
             focused: false,
             isClosed: true,
             overlayVisible: false,
@@ -378,8 +378,7 @@ export default {
         ChevronDownIcon
     },
     created() {
-        this.d_value = this.date
-        this.inputFieldValue = this.formatDateTime(this.date);
+        this.updateModel(new Date(this.date.getTime()))
         this.updateCurrentMetaData();
     },
     mounted() {
@@ -391,8 +390,10 @@ export default {
                 this.initFocusableCell();
             }
         } else {
-            this.input.value = this.inputFieldValue;
+            this.input.value = this.inputValue;
         }
+    },
+    updated() {
     },
     methods: {
         overlayRef(el) {
@@ -432,7 +433,7 @@ export default {
         updateModelTime() {
             this.timePickerChange = true;
             let value = this.d_value;
- 
+
             value.setHours(this.currentHour);
             value.setMinutes(this.currentMinute);
             value.setSeconds(this.currentSecond);
@@ -451,7 +452,7 @@ export default {
             }
         },
         onInput: _.debounce(function (event) {
-            event.target.value = this.inputFieldValue;
+            event.target.value = this.inputValue;
         }, 150),
         onOverlayEnter(el) {
             const styles = this.inline ? {} : { position: 'absolute', top: '0', left: '0' };
@@ -486,6 +487,28 @@ export default {
             this.bindResizeListener();
             this.updateCurrentMetaData();
         },
+        onOverlayLeave() {
+            this.currentView = this.view;
+            this.unbindOutsideClickListener();
+            this.unbindScrollListener();
+            this.unbindResizeListener();
+
+            this.overlay = null;
+        },
+        onOverlayAfterLeave(el) {
+            if (this.autoZIndex) {
+                ZIndex.clear(el);
+            }
+            this.updateModel(new Date(this.date.getTime()));
+            this.currentSecond = this.d_value.getSeconds();
+            this.currentMinute = this.d_value.getMinutes();
+            this.currentHour = this.d_value.getHours();
+        },
+        onBlur(event) {
+            this.formField.onBlur?.();
+
+            this.focused = false;
+        },
         bindOutsideClickListener() {
             if (!this.outsideClickListener) {
                 this.outsideClickListener = (event) => {
@@ -502,13 +525,6 @@ export default {
                 document.removeEventListener('mousedown', this.outsideClickListener);
                 this.outsideClickListener = null;
             }
-        },
-        onOverlayAfterLeave(el) {
-            if (this.autoZIndex) {
-                ZIndex.clear(el);
-            }
-            this.d_value = this.date;
-
         },
         bindScrollListener() {
             if (!this.scrollHandler) {
@@ -543,18 +559,26 @@ export default {
                 this.resizeListener = null;
             }
         },
-        onOverlayLeave() {
-            this.currentView = this.view;
-            this.unbindOutsideClickListener();
-            this.unbindScrollListener();
-            this.unbindResizeListener();
+        bindMatchMediaListener() {
+            if (!this.matchMediaListener) {
+                const query = matchMedia(`(max-width: ${this.breakpoint})`);
 
-            this.overlay = null;
+                this.query = query;
+                this.queryMatches = query.matches;
+
+                this.matchMediaListener = () => {
+                    this.queryMatches = query.matches;
+                    this.mobileActive = false;
+                };
+
+                this.query.addEventListener('change', this.matchMediaListener);
+            }
         },
-        onBlur(event) {
-            this.formField.onBlur?.();
-
-            this.focused = false;
+        unbindMatchMediaListener() {
+            if (this.matchMediaListener) {
+                this.query.removeEventListener('change', this.matchMediaListener);
+                this.matchMediaListener = null;
+            }
         },
         isOutsideClicked(event) {
             return !(this.$el.isSameNode(event.target) || this.isNavIconClicked(event) || this.$el.contains(event.target) || (this.overlay && this.overlay.contains(event.target)));
@@ -806,7 +830,6 @@ export default {
             }
         },
         incrementHour(event) {
-            let prevHour = this.currentHour;
             let newHour = this.currentHour + Number(this.stepHour);
 
             newHour = newHour >= 24 ? newHour - 24 : newHour;
@@ -900,11 +923,22 @@ export default {
             this.updateModel(modelVal);
         },
 
-        clickToSave() {
 
+        clickToSave() {
+            this.$emit('getNewTime', {"date":this.d_value,"callback":(date = null) => {
+                if (date) {
+                    this.updateModel(new Date(date.getTime()));
+                    this.currentYear = date.getFullYear();
+                    this.currentMonth = date.getMonth();
+                    this.currentSecond = date.getSeconds();
+                    this.currentMinute = date.getMinutes();
+                    this.currentHour = date.getHours();
+                }
+            }});
+            this.overlayVisible = false;
         },
         clickToCancel() {
-            this.overlayVisible =false;
+            this.overlayVisible = false;
         },
 
 
@@ -1054,6 +1088,9 @@ export default {
 
     },
     computed: {
+        inputValue() {
+            return this.formatDateTime(this.date);
+        },
         formattedCurrentHour() {
             return this.currentHour < 10 ? '0' + this.currentHour : this.currentHour;
         },

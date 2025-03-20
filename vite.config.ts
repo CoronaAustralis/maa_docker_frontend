@@ -23,7 +23,7 @@ export default defineConfig({
         '@vueuse/core',
         'pinia',
       ],
-      dirs: ['./src/utils'],
+      dirs: ['./src/utils','./src/api'],
       dts: true,
       eslintrc: {
         enabled: false,

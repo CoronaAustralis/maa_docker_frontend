@@ -1,5 +1,7 @@
 import axios from 'axios';
+import { useToast } from "vue-toastification";
 
+const toast = useToast()
 // 创建 axios 实例
 const service = axios.create({
   baseURL: window.location.origin +"/api", // 这里可以配置你的 API 基础路径
@@ -20,10 +22,22 @@ service.interceptors.request.use(
 
 service.interceptors.response.use(
   response => {
+    if(response.data.code){
+      toast.error(response.data.err)
+      return Promise.reject(response.data.err)
+    }else{
+      if(response.data.msg){
+        toast.info(response.data.msg)
+      }
+    }
     return Promise.resolve(response);
   },
   error => {
-    console.error('err' + error); // for debug
+    if(error.response?.data?.code == 400){
+      toast.error(error.response.data.err)
+    }else{
+      toast.error("服务器错误")
+    }
     return Promise.reject(error);
   }
 );

@@ -1,5 +1,6 @@
 <!-- *** -->
 <template>
+    <div class="w-full sm:aspect-video">1111</div>
     <div class="w-full px-4">
         <div class="grid grid-cols-1 justify-center items-center sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card :pt="{
@@ -16,25 +17,25 @@
                     <ScrollPanel style="height: 10rem;">
                         <div class="flex flex-col gap-1 mt-2 mb-1">
                             <Card v-for="item in store.clusterQueue[ele.type]" :key="item.hash"
-                                :class="'text-sm hover:bg-gray-100 cursor-pointer ' + (item.isLoading ? 'loading' : 'test')">
+                                :class="'text-sm hover:bg-gray-100 cursor-pointer ' + (item.isLoading ? 'loading' : '')" @click="clickToDetail(item)">
                                 <template #content>
                                     <div class="flex w-full items-center">
-                                        <div>
+                                        <div class="w-7/12">
                                             <div>
-                                                <div contenteditable class="cursor-text grow mb-1" @blur="aliasChange($event, item)">{{
+                                                <div contenteditable @click.stop="()=>{}" class="cursor-text grow mb-1 rounded-md" @blur="aliasChange($event, item)">{{
                                                     item.alias }}
                                                 </div>
                                             </div>
-                                            <DatePicker v-model="item.time"  showTime hourFormat="24" />
-                                            <!-- <div>{{ item.time }}</div> -->
+                                            <div>
+                                            <MyDatepicker :date="item.time" showTime @getNewTime="timeChange($event,item)"></MyDatepicker>
+                                        </div>
                                         </div>
                                         <div class="ml-auto flex">
-                                            <div
-                                                :class="item.isEnable ? 'hover:bg-green-200' : 'hover:bg-gray-200' + ' hover:opacity-100 rounded-lg opacity-50'">
-                                                <i class="pi pi-check text-xl align-bottom m-2"></i>
+                                            <div class="hover:bg-gray-200 hover:opacity-100 rounded-lg opacity-50">
+                                                <i :class="(item.isEnable ? 'text-green-300' : '') + ' pi pi-check align-bottom m-2'" style="font-size: 1rem" class="" @click.stop="enableCluster(item)"></i>
                                             </div>
                                             <div class="hover:bg-gray-200 hover:opacity-100 rounded-lg opacity-50">
-                                                <i class="pi pi-trash text-xl align-bottom m-2"
+                                                <i style="font-size: 1rem" class="pi pi-trash align-bottom m-2"
                                                     @click.stop="deleteCluster(item)"></i>
                                             </div>
                                         </div>
@@ -55,11 +56,25 @@
 import api from '@/api/api';
 import { useStore } from '@/stores/store';
 import { generateHash } from '@/utils/utils';
+import { useToast } from "vue-toastification";
+
+const toast = useToast()
+const store = useStore()
+
+const typeList: { label: string, type: keyof ClusterType }[] = [{ "label": "每日任务簇", "type": "day" }, { "label": "每周任务簇", "type": "week" }, { "label": "每月任务簇", "type": "month" }, { "label": "自定义任务簇", "type": "custom" }]
 
 const aliasChange = (e: Event, item: TaskCluster) => {
-    item.isLoading = true
     const tempTaskCluster: TaskCluster = JSON.parse(JSON.stringify(item))
-    tempTaskCluster.alias = (e.target as HTMLDivElement).innerText
+    tempTaskCluster.alias = (e.target as HTMLDivElement).textContent  == null? "" : (e.target as HTMLDivElement).textContent!
+    if((tempTaskCluster.alias === item.alias)){
+        return
+    }
+    if((tempTaskCluster.alias === "")){
+        (e.target as HTMLDivElement).textContent = item.alias
+        toast.error('新名称为空')
+        return
+    }
+    item.isLoading = true
     const params: IParams = {
         ApiType: "ModifyCluster",
         NewTaskCluster: tempTaskCluster,
@@ -73,13 +88,42 @@ const aliasChange = (e: Event, item: TaskCluster) => {
             }
         }
     }).catch((err: any) => {
+        for (let i of store.clusterQueue[item.type]) {
+            if (i.hash == item.hash) {
+                i.isLoading = false
+            }
+        }
         console.error(err)
     })
 }
 
-const typeList: { label: string, type: keyof ClusterType }[] = [{ "label": "每日任务簇", "type": "day" }, { "label": "每周任务簇", "type": "week" }, { "label": "每月任务簇", "type": "month" }, { "label": "自定义任务簇", "type": "custom" }]
-
-const store = useStore()
+const timeChange = (args: {"date": Date, "callback": Function}, item: TaskCluster) => {
+    item.isLoading = true
+    const tempTaskCluster: TaskCluster = JSON.parse(JSON.stringify(item))
+    tempTaskCluster.time = args.date
+    const params: IParams = {
+        ApiType: "ModifyCluster",
+        NewTaskCluster: tempTaskCluster,
+        Content: ""
+    }
+    api.ChangeCluster(params).then(() => {
+        for (let i of store.clusterQueue[item.type]) {
+            if (i.hash == item.hash) {
+                i.isLoading = false
+                i.time = tempTaskCluster.time
+            }
+        }
+        store.sortCluster(tempTaskCluster)
+        args.callback(args.date)
+    }).catch((err: any) => {
+        for (let i of store.clusterQueue[item.type]) {
+            if (i.hash == item.hash) {
+                i.isLoading = false
+            }
+        }
+        console.error(err)
+    })
+}
 
 const addCluster = (clusterType: keyof ClusterType) => {
     generateHash().then(hash => {
@@ -90,6 +134,7 @@ const addCluster = (clusterType: keyof ClusterType) => {
             time: new Date(),
             isEnable: false,
             isLoading: true,
+            isTaskLoading:false,
             tasks: []
         }
         const params: IParams = {
@@ -104,6 +149,7 @@ const addCluster = (clusterType: keyof ClusterType) => {
                     i.isLoading = false
                 }
             }
+            store.clusterContent[cluster.hash] = {}
         }).catch((err: any) => {
             console.error(err)
             store.deleteCluster(cluster)
@@ -126,54 +172,38 @@ const deleteCluster = (cluster: TaskCluster) => {
         cluster.isLoading = false
     })
 }
+
+const enableCluster = (item:TaskCluster)=>{
+    const tempTaskCluster: TaskCluster = JSON.parse(JSON.stringify(item))
+    tempTaskCluster.isEnable = !item.isEnable
+    const params: IParams = {
+        ApiType: "ModifyCluster",
+        NewTaskCluster: tempTaskCluster,
+        Content: ""
+    }
+    item.isLoading = true
+    api.ChangeCluster(params).then(() => {
+        for (let i of store.clusterQueue[item.type]) {
+            if (i.hash == item.hash) {
+                i.isLoading = false
+                i.isEnable = tempTaskCluster.isEnable
+            }
+        }
+    }).catch((err: any) => {
+        for (let i of store.clusterQueue[item.type]) {
+            if (i.hash == item.hash) {
+                i.isLoading = false
+            }
+        }
+        console.error(err)
+    })
+}
+
+const clickToDetail =(item:TaskCluster)=>{
+    store.currentClusterHash = item.hash
+}
 </script>
 
 <style lang='css' scoped>
-.loading::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(255, 255, 255, 0.8);
-    z-index: 1;
-}
 
-.loading::before {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 2rem;
-    height: 2rem;
-    margin-top: -1rem;
-    margin-left: -1rem;
-    border: 0.25rem solid #3498db;
-    border-top: 0.25rem solid #fff;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    z-index: 2;
-}
-
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-[contenteditable] {
-    outline: 1px solid transparent;
-    border: 1px solid #fff;
-    width: 100%;
-}
-
-[contenteditable]:focus {
-    border: 1px solid var(--p-primary-color);
-    border-radius: 3px;
-}
 </style>
