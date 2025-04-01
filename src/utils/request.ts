@@ -23,18 +23,13 @@ service.interceptors.request.use(
 service.interceptors.response.use(
   response => {
     if(response.data.code){
-      toast.error(response.data.err)
-      return Promise.reject(response.data.err)
-    }else{
-      if(response.data.msg){
-        toast.info(response.data.msg)
-      }
+      toast.error(response.data.msg)
     }
     return Promise.resolve(response);
   },
   error => {
-    if(error.response?.data?.code == 400){
-      toast.error(error.response.data.err)
+    if(error.response?.status == 400){
+      toast.error(error.response.data.msg)
     }else{
       toast.error("服务器错误")
     }

@@ -23,31 +23,50 @@
                                 </Card>
                             </div>
                             <div v-else :class="(store.currentCluster?.isTaskLoading ? 'loading' : '')">
-                                <Card v-for="i in store.currentCluster?.tasks" @click="openTask(i)"
-                                    :class="(currentTaskName == i ? 'bg-gray-100' : '') + ' mb-2 hover:bg-gray-100 cursor-pointer'">
-                                    <template #content>
-                                        <div class="flex w-full items-center cursor-pointer">
-                                            <div class="w-1/2">
-                                                <div class="truncate cursor-text" contenteditable
-                                                    @click.stop.self="() => { }" @blur="renameTask($event, i)">
-                                                    {{ i }}
+                                <div v-if="store.currentCluster">
+                                    <VueDraggable v-model="store.currentCluster.tasks"  @update="onUpdateTasks">
+                                        <Card v-for="i in store.currentCluster?.tasks" @click="openTask(i)" :key="i"
+                                            :class="(currentTaskName == i ? 'bg-gray-100' : '') + ' mb-2 hover:bg-gray-100 cursor-pointer'">
+                                            <template #content>
+                                                <div class="flex w-full items-center cursor-pointer">
+                                                    <div class="w-1/2">
+                                                        <div class="truncate cursor-text" contenteditable
+                                                            @click.stop.self="() => { }" @blur="renameTask($event, i)">
+                                                            {{ i }}
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex ml-auto">
+                                                        <div
+                                                            class="hover:bg-gray-200 hover:opacity-100 cursor-pointer rounded-lg opacity-50">
+                                                            <i class="pi pi-trash text-sm align-bottom m-2"
+                                                                @click.stop="deleteTask(i)"></i>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div class="flex ml-auto">
-                                                <div
-                                                    class="hover:bg-gray-200 hover:opacity-100 cursor-pointer rounded-lg opacity-50">
-                                                    <i class="pi pi-trash text-sm align-bottom m-2"
-                                                        @click.stop="deleteTask(i)"></i>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </template>
-                                </Card>
+                                            </template>
+                                        </Card>
+                                    </VueDraggable>
+                                </div>
                                 <Card class="mb-2 hover:bg-gray-100">
                                     <template #content>
-                                        <Button icon="pi pi-plus" class="w-1/2 p-0" raised aria-label="Save"
-                                            @click.stop="showPopover">
-                                        </Button>
+                                        <div class="flex flex-row justify-between">
+                                            <Button icon="pi pi-plus" class="w-1/3" raised aria-label="Save"
+                                                @click.stop="showPopover">
+                                            </Button>
+                                            <Button :outlined="true" class="w-1/3" label="上传infrast文件"
+                                                title="上传infrast文件" @click="uploadInfrastFile" :pt="{
+                                                    label: {
+                                                        style: {
+                                                            'white-space': 'nowrap',
+                                                            'overflow': 'hidden',
+                                                            'text-overflow': 'ellipsis'
+                                                        }
+                                                    }
+                                                }">
+                                            </Button>
+                                            <input type="file" accept="*" ref="uploadFile" style="display: none;"
+                                                @change="handleFileChange">
+                                        </div>
                                         <Popover ref="op">
                                             <NewTaskAddOption @save="newTaskAdd" @cancel="newTaskAddCancel" />
                                         </Popover>
@@ -59,15 +78,7 @@
                 </Panel>
             </div>
             <div class="grow">
-                <Card :pt="{
-                    root: {
-                        style: {
-                            'border-radius': 'var(--p-panel-border-radius)',
-                            'border': '1px solid var(--p-panel-border-color)',
-                            'box-shadow': 'none'
-                        }
-                    }
-                }">
+                <Card>
                     <template #content>
                         <div class="flex flex-row h-full">
                             <div class="w-12 text-base" style="padding-top: 9px;">
@@ -75,13 +86,13 @@
                             </div>
                             <div class="grow relative">
                                 <div :class="(store.currentCluster.isTaskLoading ? 'loading' : '')">
-                                    <Textarea :value="textAreaValue" @input="handleInput" ref="textArea" autoResize
+                                    <Textarea v-model="textAreaValue" @input="handleInput" ref="textArea" autoResize
                                         rows="5" :disabled="currentTaskName == ''" class="w-full" />
                                     <div class="flex justify-end items-center" v-if="currentTaskName != ''">
                                         <div
                                             v-if="store.clusterContent[store.currentClusterHash][currentTaskName].oldContent != store.clusterContent[store.currentClusterHash][currentTaskName].newContent">
-                                            <i class="pi pi-exclamation-circle align-bottom m-2" style="font-size: 1rem;color:orange"
-                                                title="有未保存的更改"></i>
+                                            <i class="pi pi-exclamation-circle align-bottom m-2"
+                                                style="font-size: 1rem;color:orange" title="有未保存的更改"></i>
                                         </div>
                                         <Button :outlined="true" class="mr-2" label="diff" @click="showDiff"></Button>
                                         <Button :outlined="true" label="上传更改" @click="uploadTask"></Button>
@@ -110,6 +121,7 @@ import { useStore } from "@/stores/store";
 import * as _ from "lodash";
 import { useToast } from "vue-toastification";
 import ContentDiff from "./ContentDiff.vue";
+import { VueDraggable } from 'vue-draggable-plus';
 
 const store = useStore()
 const toast = useToast()
@@ -118,6 +130,7 @@ const lineString = ref<string>('')
 const textAreaValue = ref("")
 const textArea = ref<any>(null)
 const testTextArea = ref<any>(null)
+const uploadFile = ref<any>(null)
 
 const diff = ref(false)
 
@@ -225,11 +238,19 @@ const newTaskAddCancel = () => {
     op.value.hide()
 }
 
-const handleInput = _.debounce(function (event: any) {
-    textAreaValue.value = event.target.value
-    store.clusterContent[store.currentClusterHash][currentTaskName.value].newContent = event.target.value
+const onUpdateTasks = ()=>{
+    const params: IParams = {
+        ApiType: "ModifyCluster",
+        NewTaskCluster: store.currentCluster,
+        Content: ""
+    }
+    api.ChangeCluster(params)
+}
+
+const handleInput = (event: any) => {
+    store.clusterContent[store.currentClusterHash][currentTaskName.value].newContent = textAreaValue.value
     updateLineCount()
-}, 300)
+}
 
 const openTask = (task: string) => {
     const tempTaskCluster: TaskCluster = JSON.parse(JSON.stringify(store.currentCluster))
@@ -310,6 +331,24 @@ watch(currentTaskName, (newValue) => {
         updateLineCount()
     }
 })
+
+const uploadInfrastFile = () => {
+    uploadFile.value.click()
+}
+
+const handleFileChange = (event: any) => {
+    const file = event.target.files[0]; // 获取用户选择的文件
+    if (file) {
+        console.log("用户选择的文件: ", file);
+        const formData = new FormData();
+        formData.append("file", file);
+        api.UploadInfrastFile(formData).then((res: any) => {
+            toast.success("上传成功")
+        })
+    }
+    event.target.value = null;
+}
+
 
 const showDiff = () => {
     diff.value = true

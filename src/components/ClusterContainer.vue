@@ -1,41 +1,42 @@
 <!-- *** -->
 <template>
-    <div class="w-full sm:aspect-video">1111</div>
     <div class="w-full px-4">
         <div class="grid grid-cols-1 justify-center items-center sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card :pt="{
-                root: {
-                    style: {
-                        'border-radius': 'var(--p-panel-border-radius)',
-                        'border': '1px solid var(--p-panel-border-color)',
-                        'box-shadow': 'none'
-                    }
-                }
-            }" v-for="ele in typeList">
+            <Card v-for="ele in typeList">
                 <template #title>{{ ele.label }}</template>
                 <template #content>
-                    <ScrollPanel style="height: 10rem;">
+                    <ScrollPanel style="height: 16rem;">
                         <div class="flex flex-col gap-1 mt-2 mb-1">
                             <Card v-for="item in store.clusterQueue[ele.type]" :key="item.hash"
-                                :class="'text-sm hover:bg-gray-100 cursor-pointer ' + (item.isLoading ? 'loading' : '')" @click="clickToDetail(item)">
+                                :class="'text-sm hover:bg-gray-100 cursor-pointer ' + (item.isLoading ? 'loading' : '')"
+                                @click="clickToDetail(item)">
                                 <template #content>
                                     <div class="flex w-full items-center">
                                         <div class="w-7/12">
                                             <div>
-                                                <div contenteditable @click.stop="()=>{}" class="cursor-text grow mb-1 rounded-md" @blur="aliasChange($event, item)">{{
-                                                    item.alias }}
+                                                <div contenteditable @click.stop="() => { }"
+                                                    class="cursor-text grow mb-1 rounded-md"
+                                                    @blur="aliasChange($event, item)">{{
+                                                        item.alias }}
                                                 </div>
                                             </div>
                                             <div>
-                                            <MyDatepicker :date="item.time" showTime @getNewTime="timeChange($event,item)"></MyDatepicker>
-                                        </div>
+                                                <MyDatepicker :date="item.time" showTime
+                                                    @getNewTime="timeChange($event, item)"></MyDatepicker>
+                                            </div>
                                         </div>
                                         <div class="ml-auto flex">
-                                            <div class="hover:bg-gray-200 hover:opacity-100 rounded-lg opacity-50">
-                                                <i :class="(item.isEnable ? 'text-green-300' : '') + ' pi pi-check align-bottom m-2'" style="font-size: 1rem" class="" @click.stop="enableCluster(item)"></i>
+
+                                            <div :class="(item.isEnable ? 'text-emerald-600' : 'opacity-50') + ' hover:bg-gray-200 hover:opacity-100 rounded-lg'"
+                                                @click.stop="enableCluster(item)">
+                                                <i v-if="store.runningTaskHash != item.hash" class="pi pi-check align-bottom p-2"
+                                                    style="font-size: 1rem" title="启用?"></i>
+                                                <div class="p-2" v-else title="正在运行...">
+                                                    <GrPowerCycle class="w-4 h-4 animate-spin" />
+                                                </div>
                                             </div>
                                             <div class="hover:bg-gray-200 hover:opacity-100 rounded-lg opacity-50">
-                                                <i style="font-size: 1rem" class="pi pi-trash align-bottom m-2"
+                                                <i style="font-size: 1rem" class="pi pi-trash align-bottom p-2"
                                                     @click.stop="deleteCluster(item)"></i>
                                             </div>
                                         </div>
@@ -57,6 +58,8 @@ import api from '@/api/api';
 import { useStore } from '@/stores/store';
 import { generateHash } from '@/utils/utils';
 import { useToast } from "vue-toastification";
+import { GrPowerCycle } from 'vue-icons-plus/gr';
+import Tab from 'primevue/tab';
 
 const toast = useToast()
 const store = useStore()
@@ -65,11 +68,11 @@ const typeList: { label: string, type: keyof ClusterType }[] = [{ "label": "每�
 
 const aliasChange = (e: Event, item: TaskCluster) => {
     const tempTaskCluster: TaskCluster = JSON.parse(JSON.stringify(item))
-    tempTaskCluster.alias = (e.target as HTMLDivElement).textContent  == null? "" : (e.target as HTMLDivElement).textContent!
-    if((tempTaskCluster.alias === item.alias)){
+    tempTaskCluster.alias = (e.target as HTMLDivElement).textContent == null ? "" : (e.target as HTMLDivElement).textContent!
+    if ((tempTaskCluster.alias === item.alias)) {
         return
     }
-    if((tempTaskCluster.alias === "")){
+    if ((tempTaskCluster.alias === "")) {
         (e.target as HTMLDivElement).textContent = item.alias
         toast.error('新名称为空')
         return
@@ -97,7 +100,7 @@ const aliasChange = (e: Event, item: TaskCluster) => {
     })
 }
 
-const timeChange = (args: {"date": Date, "callback": Function}, item: TaskCluster) => {
+const timeChange = (args: { "date": Date, "callback": Function }, item: TaskCluster) => {
     item.isLoading = true
     const tempTaskCluster: TaskCluster = JSON.parse(JSON.stringify(item))
     tempTaskCluster.time = args.date
@@ -134,7 +137,7 @@ const addCluster = (clusterType: keyof ClusterType) => {
             time: new Date(),
             isEnable: false,
             isLoading: true,
-            isTaskLoading:false,
+            isTaskLoading: false,
             tasks: []
         }
         const params: IParams = {
@@ -173,7 +176,7 @@ const deleteCluster = (cluster: TaskCluster) => {
     })
 }
 
-const enableCluster = (item:TaskCluster)=>{
+const enableCluster = (item: TaskCluster) => {
     const tempTaskCluster: TaskCluster = JSON.parse(JSON.stringify(item))
     tempTaskCluster.isEnable = !item.isEnable
     const params: IParams = {
@@ -199,11 +202,9 @@ const enableCluster = (item:TaskCluster)=>{
     })
 }
 
-const clickToDetail =(item:TaskCluster)=>{
+const clickToDetail = (item: TaskCluster) => {
     store.currentClusterHash = item.hash
 }
 </script>
 
-<style lang='css' scoped>
-
-</style>
+<style lang='css' scoped></style>

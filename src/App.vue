@@ -30,6 +30,7 @@ api.GetTemplateCluster("").then((res:any) => {
     <Header></Header>
     <ClusterContainer></ClusterContainer> 
     <TasksList/>
+    <Log/>
 </template>
 
 <style scoped></style>

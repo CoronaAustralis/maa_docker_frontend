@@ -21,4 +21,6 @@ function debounce(func: Function, time = 300) {
     return Promise.resolve(n)
 }
 
+
+
 export { debounce,generateHash };

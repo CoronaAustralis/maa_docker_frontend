@@ -37,6 +37,7 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
+  base: './', 
   server: {
     host: '0.0.0.0',
     proxy: {
@@ -44,6 +45,11 @@ export default defineConfig({
         target: 'http://192.168.5.46:8080',	//实际请求地址
         changeOrigin: true,
       },
+      "/ws": {
+        target: "ws://192.168.5.46:8080", // 线上服务器websocket地址
+        changeOrigin: true,
+        ws: true,
+    }
     }
   },
 })

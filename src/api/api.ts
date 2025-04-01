@@ -9,6 +9,10 @@ interface Api {
   ChangeTaskFile(params: IParams): Promise<any>
   GetProfiles(): Promise<any>
   UpdateProfiles(params: any): Promise<any>
+  CheckGame(): Promise<any>
+  UploadInfrastFile(params: any): Promise<any>
+  GetRunningTask(): Promise<any>
+  ForceStopRunningTask(): Promise<any>
 }
 const api: Api = {
   GetClusters(params: any) {
@@ -72,7 +76,7 @@ const api: Api = {
   GetProfiles() {
     return service({
       url: '/GetProfiles',
-      method: 'post',
+      method: 'get',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -88,6 +92,32 @@ const api: Api = {
       },
     })
   },
+  CheckGame(){
+    return service({
+      url: '/CheckGame',
+      method: 'get',
+    })
+  },
+
+  GetRunningTask(){
+    return service({
+      url: '/GetRunningTask',
+      method: 'get',
+    })
+  },
+  UploadInfrastFile(params: any){
+    return service({
+      url: '/UploadInfrastFile',
+      method: 'post',
+      data:params,
+    })
+  },
+  ForceStopRunningTask(){
+    return service({
+      url: '/ForceStopRunningTask',
+      method: 'get',
+    })
+  }
 }
 
 export default api

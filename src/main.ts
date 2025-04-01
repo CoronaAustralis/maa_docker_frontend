@@ -1,6 +1,6 @@
 import './assets/main.css'
-import 'vue-diff/dist/index.css';
-import "vue-toastification/dist/index.css";
+import 'vue-diff/dist/index.css'
+import 'vue-toastification/dist/index.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
@@ -8,14 +8,14 @@ import PrimeVue from 'primevue/config'
 import Aura from '@primevue/themes/aura'
 import App from './App.vue'
 import { definePreset } from '@primevue/themes'
-import Toast from "vue-toastification";
-import VueDiff from 'vue-diff';
+import Toast from 'vue-toastification'
+import VueDiff from 'vue-diff'
 
 const app = createApp(App)
 
 app.use(createPinia())
 app.use(Toast, { timeout: 2000 })
-app.use(VueDiff);
+app.use(VueDiff)
 
 const NewAura = definePreset(Aura, {
   components: {
@@ -45,7 +45,10 @@ app.use(PrimeVue, {
       root: {
         style: {
           position: 'relative',
-        }
+          'border-radius': 'var(--p-panel-border-radius)',
+          border: '1px solid var(--p-panel-border-color)',
+          'box-shadow': 'none',
+        },
       },
       body: {
         // class:"text-sm hover:bg-gray-100 cursor-pointer"

@@ -8,22 +8,8 @@ export const useStore = defineStore('store', {
     templateCluster: {} as TaskCluster,
     clusterContent:{} as {[props:string]:{[props:string]:{"oldContent":string,"newContent":string}}},
     currentClusterHash: '',
-    profiles: {
-      "Connection": {
-          "AdbPath": "",
-          "Device": "",
-          "Config": ""
-      },
-      "StaticOptions": {
-          "CpuOcr": true
-      },
-      "InstanceOptions": {
-          "TouchMode": "",
-          "DeploymentWithPause": false,
-          "AdbLiteEnabled": false,
-          "KillAdbOnExit": false
-      }
-  } as Profiles
+    profiles: "",
+    runningTaskHash: "",
   }),
   getters: {
     currentCluster: state => {

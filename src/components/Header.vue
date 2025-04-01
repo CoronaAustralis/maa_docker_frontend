@@ -1,11 +1,16 @@
 <template>
 
-    <div class="flex items-center h-12 w-16 mr-0 m-auto justify-center gap-x-4 sm:mr-20">
+    <div class="flex items-center h-12 w-24 mr-0 m-auto justify-center gap-x-4 sm:mr-20">
+        <div class="hover:bg-gray-200 hover:opacity-100 rounded-lg opacity-50" title="强行结束当前任务簇"
+            @click.stop="forceStopRunningTask">
+            <i class="pi pi-times align-bottom m-2" style="font-size: 1rem"></i>
+        </div>
         <div class="hover:bg-gray-200 hover:opacity-100 rounded-lg opacity-50" title="重置到template"
             @click.stop="viewToTemplate">
             <i class="pi pi-sync align-bottom m-2" style="font-size: 1rem"></i>
         </div>
-        <div class="hover:bg-gray-200 hover:opacity-100 rounded-lg opacity-50" title="设置" @click.stop="settingVisible = true">
+        <div class="hover:bg-gray-200 hover:opacity-100 rounded-lg opacity-50" title="设置"
+            @click.stop="settingVisible = true">
             <i class="pi pi-cog align-bottom m-2" style="font-size: 1rem"></i>
         </div>
     </div>
@@ -24,7 +29,7 @@
     </div>
 
     <div>
-        <Dialog v-model:visible="settingVisible" modal header="设置" :style="{ width: '25rem' }">
+        <Dialog v-model:visible="settingVisible" modal header="设置" :style="{ width: '40%' }">
             <SettingView @close="settingVisible = false"></SettingView>
         </Dialog>
         <!-- <Test/> -->
@@ -33,10 +38,13 @@
 
 <script setup>
 import { useStore } from '@/stores/store';
+import { useToast } from 'vue-toastification';
+
+const toast = useToast()
 
 const store = useStore();
 
-const settingVisible = ref(true);
+const settingVisible = ref(false);
 const viewToTemplate = () => {
     console.log('viewToTemplate')
     if (store.templateCluster?.hash) {
@@ -44,9 +52,26 @@ const viewToTemplate = () => {
     }
 }
 
-// api.GetProfiles().then((res) => {
-//     store.profiles = res.data.data
-// })
+const forceStopRunningTask = () => {
+    api.ForceStopRunningTask()
+}
+
+api.CheckGame().then((res) => {
+    if (res.data.code == 0) {
+        toast.info(res.data.msg)
+    }
+})
+
+const getRunningTask = () => {
+    api.GetRunningTask().then((res) => {
+        if (store.runningTaskHash != res.data.taskCluster) {
+            store.runningTaskHash = res.data.taskCluster
+        }
+    })
+}
+
+getRunningTask()
+setInterval(getRunningTask, 3000)
 
 </script>
 
