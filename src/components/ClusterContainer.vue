@@ -59,12 +59,11 @@ import { useStore } from '@/stores/store';
 import { generateHash } from '@/utils/utils';
 import { useToast } from "vue-toastification";
 import { GrPowerCycle } from 'vue-icons-plus/gr';
-import Tab from 'primevue/tab';
 
 const toast = useToast()
 const store = useStore()
 
-const typeList: { label: string, type: keyof ClusterType }[] = [{ "label": "每日任务簇", "type": "day" }, { "label": "每周任务簇", "type": "week" }, { "label": "每月任务簇", "type": "month" }, { "label": "自定义任务簇", "type": "custom" }]
+const typeList: { label: string, type: keyof ClusterType }[] = [{ "label": "每日任务簇", "type": "day" }, { "label": "每周任务簇", "type": "week" }, { "label": "每月任务簇", "type": "month" }]
 
 const aliasChange = (e: Event, item: TaskCluster) => {
     const tempTaskCluster: TaskCluster = JSON.parse(JSON.stringify(item))
