@@ -56,11 +56,11 @@ const forceStopRunningTask = () => {
     api.ForceStopRunningTask()
 }
 
-api.CheckGame().then((res) => {
-    if (res.data.code == 0) {
-        toast.info(res.data.msg)
-    }
-})
+// api.CheckGame().then((res) => {
+//     if (res.data.code == 0) {
+//         toast.info(res.data.msg)
+//     }
+// })
 
 const getRunningTask = () => {
     api.GetRunningTask().then((res) => {
