@@ -11,6 +11,7 @@ declare module 'vue' {
     Button: typeof import('primevue/button')['default']
     Card: typeof import('primevue/card')['default']
     ClusterContainer: typeof import('./src/components/ClusterContainer.vue')['default']
+    ConfirmDialog: typeof import('primevue/confirmdialog')['default']
     ContentDiff: typeof import('./src/components/tasks/ContentDiff.vue')['default']
     Dialog: typeof import('primevue/dialog')['default']
     Header: typeof import('./src/components/Header.vue')['default']

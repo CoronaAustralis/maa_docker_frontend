@@ -24,7 +24,7 @@
                             </div>
                             <div v-else :class="(store.currentCluster?.isTaskLoading ? 'loading' : '')">
                                 <div v-if="store.currentCluster">
-                                    <VueDraggable v-model="store.currentCluster.tasks"  @update="onUpdateTasks">
+                                    <VueDraggable v-model="store.currentCluster.tasks" @update="onUpdateTasks">
                                         <Card v-for="i in store.currentCluster?.tasks" @click="openTask(i)" :key="i"
                                             :class="(currentTaskName == i ? 'bg-gray-100' : '') + ' mb-2 hover:bg-gray-100 cursor-pointer'">
                                             <template #content>
@@ -122,9 +122,11 @@ import * as _ from "lodash";
 import { useToast } from "vue-toastification";
 import ContentDiff from "./ContentDiff.vue";
 import { VueDraggable } from 'vue-draggable-plus';
+import { useConfirm } from "primevue/useconfirm";
 
 const store = useStore()
 const toast = useToast()
+const confirm = useConfirm();
 const currentTaskName = ref("")
 const lineString = ref<string>('')
 const textAreaValue = ref("")
@@ -180,34 +182,51 @@ const renameTask = (e: Event, oldName: string) => {
 }
 
 const deleteTask = (task: string) => {
-    const tempTaskCluster: TaskCluster = JSON.parse(JSON.stringify(store.currentCluster))
-    store.setTaskLoading(tempTaskCluster.hash, true)
-    const params: IParams = {
-        ApiType: "DeleteTask",
-        NewTaskCluster: tempTaskCluster,
-        Content: task
-    }
-    api.ChangeTask(params).then(() => {
-        for (let i of store.clusterQueue[tempTaskCluster.type]) {
-            if (i.hash == tempTaskCluster.hash) {
-                for (let ele of i.tasks) {
-                    if (ele == task) {
-                        i.tasks.splice(i.tasks.indexOf(ele), 1)
-                        delete store.clusterContent[i.hash]?.[ele]
-                        if (currentTaskName.value == task) {
-                            currentTaskName.value = ""
+    confirm.require({
+        message: '确定要删除该任务?',
+        header: '删除',
+        icon: 'pi pi-exclamation-triangle',
+        rejectProps: {
+            label: '取消',
+            severity: 'secondary',
+            outlined: true
+        },
+        acceptProps: {
+            label: '删除'
+        },
+        accept: () => {
+            const tempTaskCluster: TaskCluster = JSON.parse(JSON.stringify(store.currentCluster))
+            store.setTaskLoading(tempTaskCluster.hash, true)
+            const params: IParams = {
+                ApiType: "DeleteTask",
+                NewTaskCluster: tempTaskCluster,
+                Content: task
+            }
+            api.ChangeTask(params).then(() => {
+                for (let i of store.clusterQueue[tempTaskCluster.type]) {
+                    if (i.hash == tempTaskCluster.hash) {
+                        for (let ele of i.tasks) {
+                            if (ele == task) {
+                                i.tasks.splice(i.tasks.indexOf(ele), 1)
+                                delete store.clusterContent[i.hash]?.[ele]
+                                if (currentTaskName.value == task) {
+                                    currentTaskName.value = ""
+                                }
+                                break
+                            }
                         }
+                        i.isTaskLoading = false
                         break
                     }
                 }
-                i.isTaskLoading = false
-                break
-            }
+            }).catch((err: any) => {
+                store.setTaskLoading(tempTaskCluster.hash, false)
+                // TODO
+            })
+        },
+        reject: () => {
         }
-    }).catch((err: any) => {
-        store.setTaskLoading(tempTaskCluster.hash, false)
-        // TODO
-    })
+    });
 }
 
 const newTaskAdd = (tasks: string[]) => {
@@ -238,7 +257,7 @@ const newTaskAddCancel = () => {
     op.value.hide()
 }
 
-const onUpdateTasks = ()=>{
+const onUpdateTasks = () => {
     const params: IParams = {
         ApiType: "ModifyCluster",
         NewTaskCluster: store.currentCluster,

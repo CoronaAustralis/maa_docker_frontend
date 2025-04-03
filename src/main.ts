@@ -10,10 +10,12 @@ import App from './App.vue'
 import { definePreset } from '@primevue/themes'
 import Toast from 'vue-toastification'
 import VueDiff from 'vue-diff'
+import ConfirmationService from 'primevue/confirmationservice'
 
 const app = createApp(App)
 
 app.use(createPinia())
+app.use(ConfirmationService)
 app.use(Toast, { timeout: 2000 })
 app.use(VueDiff)
 

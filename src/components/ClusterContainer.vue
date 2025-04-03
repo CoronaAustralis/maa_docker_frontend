@@ -29,8 +29,9 @@
 
                                             <div :class="(item.isEnable ? 'text-emerald-600' : 'opacity-50') + ' hover:bg-gray-200 hover:opacity-100 rounded-lg'"
                                                 @click.stop="enableCluster(item)">
-                                                <i v-if="store.runningTaskHash != item.hash" class="pi pi-check align-bottom p-2"
-                                                    style="font-size: 1rem" title="启用?"></i>
+                                                <i v-if="store.runningTaskHash != item.hash"
+                                                    class="pi pi-check align-bottom p-2" style="font-size: 1rem"
+                                                    title="启用?"></i>
                                                 <div class="p-2" v-else title="正在运行...">
                                                     <GrPowerCycle class="w-4 h-4 animate-spin" />
                                                 </div>
@@ -59,7 +60,9 @@ import { useStore } from '@/stores/store';
 import { generateHash } from '@/utils/utils';
 import { useToast } from "vue-toastification";
 import { GrPowerCycle } from 'vue-icons-plus/gr';
+import { useConfirm } from "primevue/useconfirm";
 
+const confirm = useConfirm();
 const toast = useToast()
 const store = useStore()
 
@@ -161,18 +164,36 @@ const addCluster = (clusterType: keyof ClusterType) => {
 }
 
 const deleteCluster = (cluster: TaskCluster) => {
-    const params: IParams = {
-        ApiType: "DeleteCluster",
-        NewTaskCluster: cluster,
-        Content: ""
-    }
-    cluster.isLoading = true
-    api.ChangeCluster(params).then(() => {
-        store.deleteCluster(cluster)
-    }).catch((err: any) => {
-        console.error(err)
-        cluster.isLoading = false
-    })
+    confirm.require({
+        message: '确定要删除该任务簇?',
+        header: '删除',
+        icon: 'pi pi-exclamation-triangle',
+        rejectProps: {
+            label: '取消',
+            severity: 'secondary',
+            outlined: true
+        },
+        acceptProps: {
+            label: '删除'
+        },
+        accept: () => {
+            const params: IParams = {
+                ApiType: "DeleteCluster",
+                NewTaskCluster: cluster,
+                Content: ""
+            }
+            cluster.isLoading = true
+            api.ChangeCluster(params).then(() => {
+                store.deleteCluster(cluster)
+            }).catch((err: any) => {
+                console.error(err)
+                cluster.isLoading = false
+            })
+        },
+        reject: () => {
+            return
+        }
+    });
 }
 
 const enableCluster = (item: TaskCluster) => {
