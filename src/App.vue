@@ -28,7 +28,7 @@ api.GetTemplateCluster("").then((res:any) => {
 
 <template>
     <Header></Header>
-    <ClusterContainer></ClusterContainer> 
+    <ClusterContainer></ClusterContainer>
     <TasksList/>
     <Log/>
     <ConfirmDialog></ConfirmDialog>

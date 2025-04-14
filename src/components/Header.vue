@@ -1,21 +1,25 @@
 <template>
 
     <div class="flex items-center h-12 w-24 mr-0 m-auto justify-center gap-x-4 sm:mr-20">
-        <div class="hover:bg-gray-200 hover:opacity-100 rounded-lg opacity-50" title="强行结束当前任务簇"
+        <div class="hover:bg-gray-200 hover:opacity-100 rounded-lg opacity-50 btn" title="强行结束当前任务簇"
             @click.stop="forceStopRunningTask">
             <i class="pi pi-times align-bottom m-2" style="font-size: 1rem"></i>
         </div>
-        <div class="hover:bg-gray-200 hover:opacity-100 rounded-lg opacity-50" title="重置到template"
+        <div class="hover:bg-gray-200 hover:opacity-100 rounded-lg opacity-50 btn" title="重置到template"
             @click.stop="viewToTemplate">
             <i class="pi pi-sync align-bottom m-2" style="font-size: 1rem"></i>
         </div>
-        <div class="hover:bg-gray-200 hover:opacity-100 rounded-lg opacity-50" title="设置"
+        <div class="hover:bg-gray-200 hover:opacity-100 rounded-lg opacity-50 btn" title="设置"
             @click.stop="settingVisible = true">
             <i class="pi pi-cog align-bottom m-2" style="font-size: 1rem"></i>
         </div>
+        <div>
+          <button class="btn"></button>
+
+        </div>
     </div>
     <div class="container hidden sm:block sm:mx-auto">
-        <a href="https://your-url" class="github-corner" aria-label="View source on GitHub"><svg width="3rem"
+        <a href="https://github.com/CoronaAustralis/maa_docker" class="github-corner" aria-label="View source on GitHub"><svg width="3rem"
                 height="3rem" viewBox="0 0 250 250"
                 style="fill:#000000; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true">
                 <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
@@ -38,9 +42,6 @@
 
 <script setup>
 import { useStore } from '@/stores/store';
-import { useToast } from 'vue-toastification';
-
-const toast = useToast()
 
 const store = useStore();
 
@@ -71,8 +72,33 @@ const getRunningTask = () => {
 }
 
 getRunningTask()
-setInterval(getRunningTask, 3000)
+// setInterval(getRunningTask, 3000)
 
 </script>
 
-<style lang='css' scoped></style>
+<style lang='css' scoped>
+.btn:focus {
+  outline: none;
+}
+
+.btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.4s ease, height 0.4s ease, opacity 0.4s ease;
+  opacity: 0;
+}
+
+.btn:active::after {
+  width: 200px;
+  height: 200px;
+  opacity: 1;
+}
+
+</style>
