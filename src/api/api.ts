@@ -13,6 +13,7 @@ interface Api {
   UploadInfrastFile(params: any): Promise<any>
   GetRunningTask(): Promise<any>
   ForceStopRunningTask(): Promise<any>
+  UpdateEmailPush(params: any): Promise<any>
 }
 const api: Api = {
   GetClusters(params: any) {
@@ -117,7 +118,17 @@ const api: Api = {
       url: '/ForceStopRunningTask',
       method: 'get',
     })
-  }
+  },
+  UpdateEmailPush(params: any){
+    return service({
+      url: '/UpdateEmailPush',
+      method: 'post',
+      data: JSON.stringify(params),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+  },
 }
 
 export default api

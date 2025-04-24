@@ -17,6 +17,7 @@ declare module 'vue' {
     Header: typeof import('./src/components/Header.vue')['default']
     InputText: typeof import('primevue/inputtext')['default']
     Log: typeof import('./src/components/Log.vue')['default']
+    Message: typeof import('primevue/message')['default']
     MyDatepicker: typeof import('./src/components/utils/MyDatepicker.vue')['default']
     NewTaskAddOption: typeof import('./src/components/tasks/NewTaskAddOption.vue')['default']
     Panel: typeof import('primevue/panel')['default']
