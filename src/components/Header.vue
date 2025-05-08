@@ -53,8 +53,8 @@
             <InputText name="token" type="text" placeholder="token" fluid />
           </div>
           <div class="flex justify-end gap-2">
-            <Button type="button" label="Cancel" severity="secondary" @click="emailPushVisible = false"></Button>
-            <Button type="submit" severity="secondary" label="Save" />
+            <Button type="button" label="取消" severity="secondary" @click="emailPushVisible = false"></Button>
+            <Button type="submit" severity="success" label="保存" />
           </div>
         </Form>
       </div>
